@@ -13,23 +13,24 @@ allowed-tools: [Read, Write, Bash]
 1. **查询打印记录** — 分页查询打印日志，支持时间范围、平台等筛选
 2. **查询发货记录** — 分页查询发货记录，支持时间范围、平台等筛选
 
-**Token 配置文件路径**：`.claude/fhd-config.json`
+**Token 配置方式**：使用环境变量 `$FHD_TOKEN`（优先），持久化文件 `.claude/fhd-config.json` 仅用于跨会话恢复，API 调用时不从文件读取。
 
 ---
 
 ## 二、Token 管理流程（每次 API 调用前必须执行）
 
 ```
-1. 使用 Read 工具读取 .claude/fhd-config.json
-2. 如果文件不存在 或 token 字段为空 → 提示用户输入 token
-   → 用户输入后，使用 Write 工具写入文件：
-     {
-       "token": "<用户输入的token>",
-       "createdAt": "<当前ISO时间>"
-     }
-3. 从文件读取 token → 用于 API 调用
+1. 检查环境变量 FHD_TOKEN 是否已设置（使用 Bash: echo ${FHD_TOKEN:0:4} 检查前4位）
+2. 如果环境变量未设置或为空 → 提示用户输入 token
+   → 用户输入后，使用 Bash 设置环境变量：
+     export FHD_TOKEN="<用户输入的token>"
+   → 同时将 token 安全持久化到 .claude/fhd-config.json（仅用于下次会话恢复）：
+     使用 Write 工具写入文件：{"token": "<token>"}
+   → 注意：API 调用时只使用环境变量，不读取该文件
+3. API 调用时使用 $FHD_TOKEN 环境变量，不在命令中明文嵌入 token 值
 4. 如果 API 返回认证失败（响应中包含 scode=6 或 code="AUTH_FAILED" 或 HTTP 401）
-   → 清空 token 配置（将 token 字段设为 ""）
+   → 清空环境变量：unset FHD_TOKEN
+   → 清除持久化文件中的 token
    → 提示用户"Token 已失效，请重新输入"
    → 回到步骤 2
 ```
@@ -49,13 +50,15 @@ allowed-tools: [Read, Write, Bash]
 
 ```bash
 curl -s -X POST "<BASE_URL><ENDPOINT>" \
-  --data-urlencode "token=<TOKEN>" \
+  --data-urlencode "token=$FHD_TOKEN" \
   --data-urlencode "startTime=<UNIX_TIMESTAMP>" \
   --data-urlencode "endTime=<UNIX_TIMESTAMP>" \
   --data-urlencode "page=<PAGE>" \
   --data-urlencode "pageSize=<PAGESIZE>" \
   ...其他可选参数
 ```
+
+**安全说明**：`$FHD_TOKEN` 为环境变量引用，curl 执行时由 shell 自动替换，token 值不会出现在 Claude 的任何输出中。
 
 **重要**：每个参数必须使用独立的 `--data-urlencode` 传递。
 
@@ -288,8 +291,8 @@ curl -s -X POST "<BASE_URL><ENDPOINT>" \
 
 | 错误场景 | 判断依据 | 处理方式 |
 |----------|----------|----------|
-| Token 未配置 | `.claude/fhd-config.json` 不存在或 token 为空 | 提示用户"首次使用需要配置 Token，请输入您的风火递 API Token" |
-| Token 失效 | API 返回 `scode=6` 或 `code="AUTH_FAILED"` 或 HTTP 401 | 清空 token 配置文件中的 token 字段，提示"Token 已失效，请重新输入有效 Token" |
+| Token 未配置 | `$FHD_TOKEN` 环境变量未设置或 `.claude/fhd-config.json` 不存在 | 提示用户"首次使用需要配置 Token，请输入您的风火递 API Token" |
+| Token 失效 | API 返回 `scode=6` 或 `code="AUTH_FAILED"` 或 HTTP 401 | 清空环境变量和持久化文件中的 token，提示"Token 已失效，请重新输入有效 Token" |
 | 参数错误 | API 返回 `code="PARAM_ERROR"` | 提示用户检查输入参数（时间范围、平台等）是否正确 |
 | 网络超时/连接失败 | curl 返回非零退出码或超时 | 提示"网络连接失败，请检查网络后重试" |
 | 空结果 | `list` 为空数组且 `total=0` | 提示"查询时间范围内无记录，请调整查询条件" |

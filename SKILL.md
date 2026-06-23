@@ -17,23 +17,36 @@ allowed-tools: [Read, Write, Bash]
 
 ---
 
-## 二、Token 管理流程（每次 API 调用前必须执行）
+## 二、Token 管理流程
 
+> **安全原则**：Claude 只负责检查 token 是否存在和使用它调用 API，绝不代为设置或存储 token 明文值。token 的设置和持久化由用户自行在终端完成。
+
+### 首次使用 / Token 未配置时
+
+当检测到 `$FHD_TOKEN` 环境变量未设置时，提示用户手动执行以下步骤：
+
+```bash
+# 1. 在终端设置环境变量（Claude 不会代为执行此命令）
+export FHD_TOKEN="您的API Token"
+
+# 2. （可选）持久化到文件，便于下次会话恢复
+mkdir -p .claude && echo '{"token":"'"$FHD_TOKEN"'"}' > .claude/fhd-config.json
 ```
-1. 检查环境变量 FHD_TOKEN 是否已设置（使用 Bash: echo ${FHD_TOKEN:0:4} 检查前4位）
-2. 如果环境变量未设置或为空 → 提示用户输入 token
-   → 用户输入后，使用 Bash 设置环境变量：
-     export FHD_TOKEN="<用户输入的token>"
-   → 同时将 token 安全持久化到 .claude/fhd-config.json（仅用于下次会话恢复）：
-     使用 Write 工具写入文件：{"token": "<token>"}
-   → 注意：API 调用时只使用环境变量，不读取该文件
-3. API 调用时使用 $FHD_TOKEN 环境变量，不在命令中明文嵌入 token 值
-4. 如果 API 返回认证失败（响应中包含 scode=6 或 code="AUTH_FAILED" 或 HTTP 401）
-   → 清空环境变量：unset FHD_TOKEN
-   → 清除持久化文件中的 token
-   → 提示用户"Token 已失效，请重新输入"
-   → 回到步骤 2
-```
+
+用户完成后告知 Claude 继续，Claude 不会看到 token 明文值。
+
+### 每次 API 调用前
+
+1. 使用 Bash 检查环境变量：
+   `[ -n "$FHD_TOKEN" ] && echo "Token已设置 (${FHD_TOKEN:0:4}****)" || echo "未设置"`
+2. 如未设置 → 检查 `.claude/fhd-config.json` 是否存在且可读，提示用户参考该文件设置环境变量
+3. API 调用时使用 `$FHD_TOKEN` 引用环境变量，token 值由 shell 展开，不会出现在 Claude 的任何命令输出中
+
+### Token 失效处理
+
+如果 API 返回认证失败（`scode=6` 或 `code="AUTH_FAILED"` 或 HTTP 401）：
+→ 提示用户："Token 已失效，请在终端重新设置：export FHD_TOKEN='新的Token'"
+→ Claude 不执行 `unset`、`rm` 等操作，由用户自行处理
 
 ---
 
@@ -291,8 +304,8 @@ curl -s -X POST "<BASE_URL><ENDPOINT>" \
 
 | 错误场景 | 判断依据 | 处理方式 |
 |----------|----------|----------|
-| Token 未配置 | `$FHD_TOKEN` 环境变量未设置或 `.claude/fhd-config.json` 不存在 | 提示用户"首次使用需要配置 Token，请输入您的风火递 API Token" |
-| Token 失效 | API 返回 `scode=6` 或 `code="AUTH_FAILED"` 或 HTTP 401 | 清空环境变量和持久化文件中的 token，提示"Token 已失效，请重新输入有效 Token" |
+| Token 未配置 | `$FHD_TOKEN` 环境变量未设置且 `.claude/fhd-config.json` 不存在 | 按第二章"首次使用"流程，提示用户在终端自行设置环境变量 |
+| Token 失效 | API 返回 `scode=6` 或 `code="AUTH_FAILED"` 或 HTTP 401 | 提示用户"Token 已失效，请在终端更新环境变量" |
 | 参数错误 | API 返回 `code="PARAM_ERROR"` | 提示用户检查输入参数（时间范围、平台等）是否正确 |
 | 网络超时/连接失败 | curl 返回非零退出码或超时 | 提示"网络连接失败，请检查网络后重试" |
 | 空结果 | `list` 为空数组且 `total=0` | 提示"查询时间范围内无记录，请调整查询条件" |

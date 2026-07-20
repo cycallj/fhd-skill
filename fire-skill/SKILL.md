@@ -1,6 +1,6 @@
 ---
 name: fire-skill
-description: "火花派员工后台系统 - 查询工单等工作信息。Fire company employee backend system."
+description: "火花派员工后台系统 - 查询客服工单和弹幕捕手企微客户等工作信息。Use when users mention 工单、客服工单、火花派工单、弹幕捕手、企微客户、企微客户查询 or 客户标签查询。"
 ---
 
 # 火花派（Fire）员工后台 Skill
@@ -10,6 +10,7 @@ description: "火花派员工后台系统 - 查询工单等工作信息。Fire c
 火花派是火花公司的员工后台系统。本 skill 支持以下功能：
 
 1. **工单查询** — 分页查询客服工单，支持时间范围、处理状态、工单类型、产品、问题标签、用户昵称、问题内容等筛选
+2. **弹幕捕手企微客户查询** — 分页查询企微客户，支持名称、创建时间、客户标签、排序等筛选
 
 后续将扩展更多功能。
 
@@ -50,7 +51,8 @@ fire-skill/.token
 
 ### 基础配置
 
-- **基础 URL**：`https://xyymgrapi.fhd001.com/mgr/cs/workOrder/`
+- **工单查询基础 URL**：`https://xyymgrapi.fhd001.com/mgr/cs/workOrder/`
+- **弹幕捕手企微客户查询基础 URL**：`https://fireapi.fhd001.com/mgr/pd/xhsdm/`
 - **请求方式**：GET（所有参数通过 URL query string 传递）
 - **必带参数**：`referer=mgrapi`、`token=...`
 - **分页参数**：`page`、`pageSize`
@@ -121,21 +123,24 @@ curl 命令执行后：
 2. 展示菜单让用户选择：
    "火花派员工后台，当前支持以下功能：
    1. 查询客服工单
-   请回复 1"
+   2. 查询弹幕捕手企微客户
+   请回复 1 或 2"
 3. 根据用户选择进入对应子功能流程
 4. 按子功能文档执行查询 → 格式化输出
 ```
 
 ### 隐式调用（关键词触发）
 
-当用户消息中包含"工单"、"火花派"、"客服工单"、"工单查询"、"fire"等关键词时：
-- 直接进入工单查询流程
-- 按 `workorder/` 子功能文档执行
+当用户消息中包含以下关键词时：
+- "工单"、"客服工单"、"工单查询"、"火花派工单" → 按 [工单查询文档](references/workorder.md) 执行
+- "弹幕捕手"、"企微客户"、"企微客户查询"、"客户标签" → 按 [弹幕捕手企微客户查询文档](references/qw-customer.md) 执行
+- 仅提及"火花派"或"fire"且未说明功能 → 展示菜单让用户选择
 
 ---
 
 ## 六、功能索引
 
-| 功能 | 文档路径 | 触发关键词 |
-|------|----------|------------|
-| 工单查询 | [references/workorder.md](references/workorder.md) | 工单、客服工单、工单查询、火花派工单 |
+| 功能 | 接口文档 | 结果模板 | 触发关键词 |
+|------|----------|----------|----------|
+| 工单查询 | [references/workorder.md](references/workorder.md) | [references/workorder-format-template.md](references/workorder-format-template.md) | 工单、客服工单、工单查询、火花派工单 |
+| 弹幕捕手企微客户查询 | [references/qw-customer.md](references/qw-customer.md) | [references/qw-customer-format-template.md](references/qw-customer-format-template.md) | 弹幕捕手、企微客户、企微客户查询、客户标签 |

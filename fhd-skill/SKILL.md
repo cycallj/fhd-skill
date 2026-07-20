@@ -1,7 +1,6 @@
 ---
 name: fhd-skill
 description: "风火递(FHD)打单软件 - 查询打印记录和发货记录。FHD shipping software for querying print logs and send logs. Use when user mentions 风火递/FHD, print records/打印记录, shipment records/发货记录, waybill query/运单号查询, courier tracking, or logistics logs. Supports filtering by time range, platform, recipient, and order ID."
-allowed-tools: [Read, Write, Bash]
 ---
 
 # 风火递（FHD）打单软件 Skill

@@ -1,7 +1,6 @@
 ---
 name: fire-skill
 description: "火花派员工后台系统 - 查询工单等工作信息。Fire company employee backend system."
-allowed-tools: [Read, Write, Bash]
 ---
 
 # 火花派（Fire）员工后台 Skill
@@ -139,4 +138,4 @@ curl 命令执行后：
 
 | 功能 | 文档路径 | 触发关键词 |
 |------|----------|------------|
-| 工单查询 | [workorder/](workorder/) | 工单、客服工单、工单查询、火花派工单 |
+| 工单查询 | [references/workorder.md](references/workorder.md) | 工单、客服工单、工单查询、火花派工单 |

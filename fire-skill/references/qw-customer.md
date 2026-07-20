@@ -5,7 +5,8 @@
 - **方法**：GET
 - **URL**：`https://fireapi.fhd001.com/mgr/pd/xhsdm/queryQwCustomerPage`
 - **必带参数**：`referer=mgrapi`、`token`
-- **鉴权**：复用 `fire-skill/.token`，与工单查询使用同一个 Token。
+
+调用前先阅读 [共享 API 规则](shared-api.md)。该接口与工单查询共用同一个 Token。
 
 ## 请求参数
 
@@ -22,7 +23,7 @@
 
 ## 查询流程
 
-1. 按主 Skill 的 Token 管理流程检查 `fire-skill/.token`。
+1. 按 [共享 API 规则](shared-api.md) 检查 Token。
 2. 从用户请求提取筛选条件。未指定页码时使用 `page=1`、`pageSize=20`；未指定排序时按创建时间倒序。
 3. 用户提到时间范围时，将其转换为 `createTimeBegin` 和 `createTimeEnd` 的 Unix 秒级时间戳。
 4. 用户指定多个标签时，将标签 ID 以逗号拼接为 `tagIds`；说明接口会返回同时包含全部标签的客户。
@@ -31,10 +32,9 @@
 ## curl 调用模板
 
 ```bash
-TOKEN=$(cat fire-skill/.token)
 curl -s -G "https://fireapi.fhd001.com/mgr/pd/xhsdm/queryQwCustomerPage" \
   --data-urlencode "referer=mgrapi" \
-  --data-urlencode "token=$TOKEN" \
+  --data-urlencode "token=$FIRE_TOKEN" \
   --data-urlencode "page=<PAGE>" \
   --data-urlencode "pageSize=<PAGE_SIZE>" \
   --data-urlencode "sortField=<SORT_FIELD>" \
@@ -69,7 +69,7 @@ curl -s -G "https://fireapi.fhd001.com/mgr/pd/xhsdm/queryQwCustomerPage" \
 
 ## 错误处理
 
-复用主 Skill 的通用错误处理。额外处理以下参数错误：
+复用 [共享 API 规则](shared-api.md) 的错误处理。额外处理以下参数错误：
 
 - `page` 或 `pageSize` 小于等于 0：提示用户提供正整数页码和每页条数。
 - 非 `createTime` / `updateTime` 的排序字段：改用 `createTime`。

@@ -1,146 +1,36 @@
 ---
 name: fire-skill
-description: "火花派员工后台系统 - 查询客服工单和弹幕捕手企微客户等工作信息。Use when users mention 工单、客服工单、火花派工单、弹幕捕手、企微客户、企微客户查询 or 客户标签查询。"
+description: "火花派员工后台系统，支持查询客服工单和弹幕捕手企微客户。Use when users mention 工单、客服工单、火花派工单、弹幕捕手、企微客户、企微客户查询 or 客户标签查询。"
 ---
 
 # 火花派（Fire）员工后台 Skill
 
-## 一、技能概述
+## 功能
 
-火花派是火花公司的员工后台系统。本 skill 支持以下功能：
+| 功能 | 用途 | 典型触发词 |
+|------|------|------------|
+| 工单查询 | 按时间、状态、类型、产品、标签、昵称或问题内容分页查询客服工单。 | 工单、客服工单、工单查询、火花派工单 |
+| 弹幕捕手企微客户查询 | 按名称、创建时间、标签和排序分页查询企微客户。 | 弹幕捕手、企微客户、企微客户查询、客户标签 |
 
-1. **工单查询** — 分页查询客服工单，支持时间范围、处理状态、工单类型、产品、问题标签、用户昵称、问题内容等筛选
-2. **弹幕捕手企微客户查询** — 分页查询企微客户，支持名称、创建时间、客户标签、排序等筛选
+## 执行流程
 
-后续将扩展更多功能。
+1. 根据用户请求选择功能；请求仅提及“火花派”或“fire”而未说明功能时，展示功能菜单。
+2. 先阅读 [共享 API 规则](references/shared-api.md)，确认 Token、请求和错误处理方式。
+3. 再阅读所选功能的接口文档和结果模板。
+4. 从请求中提取筛选条件；条件不明确且会显著影响结果时，向用户确认。
+5. 调用对应接口，先处理错误响应，再按结果模板输出列表和分页摘要。
 
-**Token 配置方式**：Token 存储在 `fire-skill/.token` 文件中（纯文件方式），每次 API 调用时从文件读取。
+Token 缺失或过期时，直接在聊天中向用户索取；收到后不得复述、确认或在后续消息中展示其值。
 
----
+## 功能路由
 
-## 二、Token 管理
+- “工单”“客服工单”“工单查询”“火花派工单”：阅读 [工单接口文档](references/workorder.md) 和 [工单结果模板](references/workorder-format-template.md)。
+- “弹幕捕手”“企微客户”“企微客户查询”“客户标签”：阅读 [企微客户接口文档](references/qw-customer.md) 和 [企微客户结果模板](references/qw-customer-format-template.md)。
 
-### Token 存储位置
+## 显式调用菜单
 
+```text
+火花派员工后台，当前支持以下功能：
+1. 查询客服工单
+2. 查询弹幕捕手企微客户
 ```
-fire-skill/.token
-```
-
-文件内容仅包含 token 字符串本身，无换行、无引号、无其他字符。
-
-### 首次使用 / Token 文件不存在时
-
-当检测到 `fire-skill/.token` 文件不存在时，提示用户在聊天界面输入 API Token。用户提供后，将其写入 `.token` 文件。
-
-### 每次 API 调用前
-
-1. 检查 `fire-skill/.token` 文件是否存在
-2. 如文件不存在 → 按"首次使用"流程提示用户
-3. API 调用时使用 `$(cat fire-skill/.token)` 读取文件内容并拼入 curl 命令
-
-### Token 失效处理
-
-如果 API 返回认证失败（`scode=6` 或 `code="AUTH_FAILED"` 或 HTTP 401）：
-→ 提示用户："Token 已失效，请提供新的 Token"
-→ 用户提供新 token 后，覆盖写入 `.token` 文件
-→ `.gitignore` 已配置忽略该文件，确保不会被提交到 git
-
----
-
-## 三、API 调用规范
-
-### 基础配置
-
-- **工单查询基础 URL**：`https://xyymgrapi.fhd001.com/mgr/cs/workOrder/`
-- **弹幕捕手企微客户查询基础 URL**：`https://fireapi.fhd001.com/mgr/pd/xhsdm/`
-- **请求方式**：GET（所有参数通过 URL query string 传递）
-- **必带参数**：`referer=mgrapi`、`token=...`
-- **分页参数**：`page`、`pageSize`
-
-### curl 调用模板
-
-```bash
-TOKEN=$(cat fire-skill/.token)
-curl -s -G "<BASE_URL><ENDPOINT>" \
-  --data-urlencode "referer=mgrapi" \
-  --data-urlencode "token=$TOKEN" \
-  --data-urlencode "page=<PAGE>" \
-  --data-urlencode "pageSize=<PAGESIZE>" \
-  ...其他可选参数
-```
-
-**重要**：每个参数必须使用独立的 `--data-urlencode` 传递。Token 从文件读取，由 shell 变量替换，token 值不会出现在输出中。
-
-### 响应格式
-
-**正常响应**（分页结构）：
-```json
-{
-  "page": 1,
-  "pageSize": 10,
-  "total": 150,
-  "list": [ /* 记录数组 */ ]
-}
-```
-
-**错误响应**（可能为以下格式之一）：
-```json
-{"scode": 6, "errorMsg": "认证失败"}
-{"code": "AUTH_FAILED", "message": "Token无效"}
-{"code": "PARAM_ERROR", "message": "参数错误"}
-```
-
----
-
-## 四、通用错误处理
-
-| 错误场景 | 判断依据 | 处理方式 |
-|----------|----------|----------|
-| Token 文件不存在 | `fire-skill/.token` 文件不存在 | 按第二章"首次使用"流程，提示用户提供 Token 并写入文件 |
-| Token 失效 | API 返回 `scode=6` 或 `code="AUTH_FAILED"` 或 HTTP 401 | 提示用户"Token 已失效，请提供新的 Token"，接收后覆盖写入 `.token` 文件 |
-| 参数错误 | API 返回 `code="PARAM_ERROR"` | 提示用户检查输入参数（时间范围、筛选条件等）是否正确 |
-| 网络超时/连接失败 | curl 返回非零退出码或超时 | 提示"网络连接失败，请检查网络后重试" |
-| 空结果 | `list` 为空数组且 `total=0` | 提示"查询时间范围内无记录，请调整查询条件" |
-| JSON 解析失败 | curl 返回内容不是有效 JSON | 输出原始响应内容，提示"API 返回异常，请联系管理员" |
-
-### 通用错误处理逻辑
-
-curl 命令执行后：
-1. 检查 curl 退出码（`$?`）— 非零则网络错误
-2. 检查响应是否为有效 JSON
-3. 检查是否包含 `scode` 或 `code` 错误字段
-4. 按上表处理对应错误场景
-5. 无错误则正常格式化输出
-
----
-
-## 五、交互流程
-
-### 显式调用
-
-```
-1. 检查 token 文件是否存在
-2. 展示菜单让用户选择：
-   "火花派员工后台，当前支持以下功能：
-   1. 查询客服工单
-   2. 查询弹幕捕手企微客户
-   请回复 1 或 2"
-3. 根据用户选择进入对应子功能流程
-4. 按子功能文档执行查询 → 格式化输出
-```
-
-### 隐式调用（关键词触发）
-
-当用户消息中包含以下关键词时：
-- "工单"、"客服工单"、"工单查询"、"火花派工单" → 按 [工单查询文档](references/workorder.md) 执行
-- "弹幕捕手"、"企微客户"、"企微客户查询"、"客户标签" → 按 [弹幕捕手企微客户查询文档](references/qw-customer.md) 执行
-- 仅提及"火花派"或"fire"且未说明功能 → 展示菜单让用户选择
-
----
-
-## 六、功能索引
-
-| 功能 | 接口文档 | 结果模板 | 触发关键词 |
-|------|----------|----------|----------|
-| 工单查询 | [references/workorder.md](references/workorder.md) | [references/workorder-format-template.md](references/workorder-format-template.md) | 工单、客服工单、工单查询、火花派工单 |
-| 弹幕捕手企微客户查询 | [references/qw-customer.md](references/qw-customer.md) | [references/qw-customer-format-template.md](references/qw-customer-format-template.md) | 弹幕捕手、企微客户、企微客户查询、客户标签 |

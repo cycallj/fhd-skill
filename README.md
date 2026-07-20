@@ -25,8 +25,7 @@ npx skills add cycallj/fhd-skill
 │   └── SKILL.md
 └── fire-skill/                # 火花派客服工单查询
     ├── SKILL.md
-    ├── references/            # 工单 API 文档和结果模板
-    └── .gitignore             # 忽略本地 Token 文件
+    └── references/            # 工单与企微客户 API 文档和结果模板
 ```
 
 各 Skill 的 API 配置和使用流程请参阅其对应的 `SKILL.md`。

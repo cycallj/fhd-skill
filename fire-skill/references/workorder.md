@@ -1,5 +1,15 @@
 # 工单查询 API 文档
 
+## 目录
+
+- [接口信息](#接口信息)
+- [请求参数](#请求参数)
+- [枚举表](#枚举表)
+- [响应结构](#响应结构)
+- [调用示例](#调用示例)
+
+调用前先阅读 [共享 API 规则](shared-api.md)。
+
 ## 接口信息
 
 - **方法**：GET
@@ -108,10 +118,9 @@
 ### 基础查询（最近7天工单，第1页，每页10条）
 
 ```bash
-TOKEN=$(cat fire-skill/.token)
 curl -s -G "https://xyymgrapi.fhd001.com/mgr/cs/workOrder/workOrderList" \
   --data-urlencode "referer=mgrapi" \
-  --data-urlencode "token=$TOKEN" \
+  --data-urlencode "token=$FIRE_TOKEN" \
   --data-urlencode "page=1" \
   --data-urlencode "pageSize=10" \
   --data-urlencode "beginTime=2026-07-10 00:00:00" \
@@ -121,10 +130,9 @@ curl -s -G "https://xyymgrapi.fhd001.com/mgr/cs/workOrder/workOrderList" \
 ### 按状态筛选（待处理工单）
 
 ```bash
-TOKEN=$(cat fire-skill/.token)
 curl -s -G "https://xyymgrapi.fhd001.com/mgr/cs/workOrder/workOrderList" \
   --data-urlencode "referer=mgrapi" \
-  --data-urlencode "token=$TOKEN" \
+  --data-urlencode "token=$FIRE_TOKEN" \
   --data-urlencode "page=1" \
   --data-urlencode "pageSize=10" \
   --data-urlencode "processStatusInt=0"
@@ -133,10 +141,9 @@ curl -s -G "https://xyymgrapi.fhd001.com/mgr/cs/workOrder/workOrderList" \
 ### 按用户昵称搜索
 
 ```bash
-TOKEN=$(cat fire-skill/.token)
 curl -s -G "https://xyymgrapi.fhd001.com/mgr/cs/workOrder/workOrderList" \
   --data-urlencode "referer=mgrapi" \
-  --data-urlencode "token=$TOKEN" \
+  --data-urlencode "token=$FIRE_TOKEN" \
   --data-urlencode "page=1" \
   --data-urlencode "pageSize=10" \
   --data-urlencode "nick=张三"
@@ -145,10 +152,9 @@ curl -s -G "https://xyymgrapi.fhd001.com/mgr/cs/workOrder/workOrderList" \
 ### 组合筛选
 
 ```bash
-TOKEN=$(cat fire-skill/.token)
 curl -s -G "https://xyymgrapi.fhd001.com/mgr/cs/workOrder/workOrderList" \
   --data-urlencode "referer=mgrapi" \
-  --data-urlencode "token=$TOKEN" \
+  --data-urlencode "token=$FIRE_TOKEN" \
   --data-urlencode "page=1" \
   --data-urlencode "pageSize=20" \
   --data-urlencode "beginTime=2026-07-01 00:00:00" \

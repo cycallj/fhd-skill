@@ -17,7 +17,7 @@
 | `name` | String | 否 | - | 模糊匹配微信昵称和客户名称 |
 | `createTimeBegin` | Integer | 否 | - | 创建开始时间，Unix 秒级时间戳，含边界 |
 | `createTimeEnd` | Integer | 否 | - | 创建结束时间，Unix 秒级时间戳，含边界 |
-| `tagIds` | String | 否 | - | 本地标签 ID，多个 ID 以逗号分隔，按 AND 逻辑筛选 |
+| `tagIds` | String | 否 | - | 本地标签表的 `id`，多个 ID 以逗号分隔，按 AND 逻辑筛选；不是企微 `tagId` |
 | `sortField` | String | 否 | `createTime` | `createTime` 或 `updateTime` |
 | `sortOrder` | String | 否 | `desc` | `asc` 或 `desc` |
 
@@ -25,9 +25,10 @@
 
 1. 按 [共享 API 规则](shared-api.md) 检查 Token。
 2. 从用户请求提取筛选条件。未指定页码时使用 `page=1`、`pageSize=20`；未指定排序时按创建时间倒序。
-3. 用户提到时间范围时，将其转换为 `createTimeBegin` 和 `createTimeEnd` 的 Unix 秒级时间戳。
-4. 用户指定多个标签时，将标签 ID 以逗号拼接为 `tagIds`；说明接口会返回同时包含全部标签的客户。
-5. 调用接口，并按 [企微客户结果模板](qw-customer-format-template.md) 展示结果。
+3. 当用户以标签名称筛选，或需要展示结果中的标签名称时，先调用 [企微标签列表接口](qw-tags.md) 的 `status=0` 查询；在当前请求内建立 `本地 id -> 分组名/标签名` 映射。
+4. 用户指定标签名称时，使用标签字典解析为本地 `id`，再以逗号拼接为 `tagIds`；说明多个标签按 AND 逻辑筛选。名称在多个标签组中重复时，要求用户指定标签组。
+5. 用户提到时间范围时，将其转换为 `createTimeBegin` 和 `createTimeEnd` 的 Unix 秒级时间戳。
+6. 调用客户接口，并按 [企微客户结果模板](qw-customer-format-template.md) 展示结果。客户 `tag` 中未映射的 ID 显示为“未匹配标签（ID）”，不编造名称。
 
 ## curl 调用模板
 
@@ -63,7 +64,7 @@ curl -s -G "https://fireapi.fhd001.com/mgr/pd/xhsdm/queryQwCustomerPage" \
 | `gender` | `0` 未知、`1` 男、`2` 女 |
 | `userId` | 企微内部跟进人 ID |
 | `followRecord` | 客户跟进总结 |
-| `tag` | 已关联的本地标签 ID，逗号分隔 |
+| `tag` | 已关联的本地标签 ID，逗号分隔；通过 [企微标签列表接口](qw-tags.md) 映射为标签名称 |
 | `externalUserid` | 企微外部用户唯一标识 |
 | `createTime` / `updateTime` | Unix 秒级创建/更新时间 |
 

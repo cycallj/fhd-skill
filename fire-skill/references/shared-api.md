@@ -27,15 +27,13 @@ FIRE_TOKEN=$(cat "fire-skill/.token")
 - 每次请求必须按接口文档携带 `referer=mgrapi`、`token` 及所需的分页参数。
 - 使用 `GET` 时，将参数放在 URL query string，并以独立的 `--data-urlencode` 编码。
 
-当前两个查询功能使用 `GET`，调用形式如下：
+现有多个查询接口使用 `GET`，调用形式如下：
 
 ```bash
 curl -s -G "<ENDPOINT>" \
   --data-urlencode "referer=mgrapi" \
   --data-urlencode "token=$FIRE_TOKEN" \
-  --data-urlencode "page=<PAGE>" \
-  --data-urlencode "pageSize=<PAGE_SIZE>" \
-  ...其他可选参数
+  ...接口定义的其他参数
 ```
 
 ## 响应与错误处理

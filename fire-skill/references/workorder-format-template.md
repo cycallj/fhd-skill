@@ -18,21 +18,18 @@
 | 处理状态 | `processStatusInt` | 按"枚举值转换规则（处理状态）"转换 |
 | 工单类型 | `typeInt` | 按"枚举值转换规则（工单类型）"转换 |
 | 产品 | `product.name` / `productIdInt` | 优先展示 `product.name`；缺少名称时按产品枚举映射，未收录时显示原始产品 ID |
-| 问题标签 | `questionTagIdInt` | 直接展示数值 |
+| 问题标签 | `tag.name` / `questionTagIdInt` | 优先展示 `tag.name`；缺少名称时显示原始二级标签 ID |
 | 问题内容 | `questionContent` | 截取前 50 字符展示，超出部分用 `...` 省略 |
 
 ---
 
 ## 时间戳转换规则
 
-API 返回的时间字段可能有两种格式：
+工单时间字段为 Unix 秒级时间戳。使用以下方式转换：
 
-1. **Unix 时间戳（秒）**：使用 Python 转换
-   ```bash
-   python -c "import datetime; print(datetime.datetime.fromtimestamp(<TS>).strftime('%Y-%m-%d %H:%M:%S'))"
-   ```
-
-2. **日期字符串（已经是 `YYYY-MM-DD HH:mm:ss` 格式）**：直接展示
+```bash
+python -c "import datetime; print(datetime.datetime.fromtimestamp(<TS>).strftime('%Y-%m-%d %H:%M:%S'))"
+```
 
 ---
 

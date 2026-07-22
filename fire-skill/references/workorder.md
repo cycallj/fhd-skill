@@ -6,7 +6,7 @@
 - [请求参数](#请求参数)
 - [枚举表](#枚举表)
 - [响应结构](#响应结构)
-- [调用示例](#调用示例)
+- [调用示例](#curl-调用示例)
 
 调用前先阅读 [共享 API 规则](shared-api.md)。
 
@@ -26,21 +26,31 @@
 |--------|------|------|
 | `referer` | String | 固定值 `mgrapi` |
 | `token` | String | 认证 token |
-| `page` | int | 页码（从 1 开始） |
-| `pageSize` | int | 每页条数 |
+| `page` | Integer | 页码（从 1 开始），默认 `1` |
+| `pageSize` | Integer | 每页条数，默认 `20` |
 
 ### 可选筛选参数
 
 | 参数名 | 类型 | 说明 |
 |--------|------|------|
-| `beginTime` | String | 开始时间，格式 `YYYY-MM-DD HH:mm:ss` |
-| `endTime` | String | 结束时间，格式 `YYYY-MM-DD HH:mm:ss` |
-| `processStatusInt` | int | 处理状态（见枚举表） |
-| `typeInt` | int | 工单类型（见枚举表） |
-| `productIdInt` | int | 产品 ID（见枚举表） |
-| `questionTagIdInt` | int | 问题标签 ID（见枚举表） |
+| `beginTime` | Integer | 开始时间，Unix 秒级时间戳 |
+| `endTime` | Integer | 结束时间，Unix 秒级时间戳 |
+| `processStatusInt` | Integer | 处理状态（见枚举表） |
+| `typeInt` | Integer | 工单类型（见枚举表） |
+| `productIdInt` | Integer | 产品 ID（见枚举表） |
+| `questionTagIdInt` | Integer | 问题标签 ID（二级菜单） |
+| `isTopInt` | Integer | 是否加急，`1` 表示加急 |
+| `satisfaction` | Integer | 满意度 |
+| `detectResults` | String | 质检结果，多个值用逗号分隔 |
+| `detectCreateUser` | String | 质检人 |
+| `createUser` | String | 工单创建人 |
 | `nick` | String | 用户昵称（模糊匹配） |
 | `questionContent` | String | 问题内容（模糊匹配） |
+| `processNote` | String | 处理备注（模糊匹配） |
+| `groupLeader` | String | 组长 |
+| `distinct` | Boolean | 是否按天、风火号和客服 ID 去重，取最早一条 |
+| `commitDevelopUser` | String | 提交研发人 |
+| `userInfoAssociatedDto` | Object | 客户关联信息，支持 `wangwang` 和 `fhdCode`；同时传入时为 OR 条件 |
 
 ---
 
@@ -122,22 +132,36 @@
 
 ### 成功响应
 
+以下为常用字段示例，时间字段均为 Unix 秒级时间戳：
+
 ```json
 {
   "page": 1,
-  "pageSize": 10,
-  "total": 150,
+  "pageSize": 20,
+  "total": 1,
   "list": [
     {
       "id": 12345,
+      "createTime": 1715000000,
+      "updateTime": 1715080000,
+      "createUser": "客服张三",
       "nick": "用户昵称",
       "questionContent": "问题内容",
+      "type": 1,
+      "processStatus": 0,
       "processStatusInt": 0,
       "typeInt": 1,
-      "productIdInt": 1,
-      "questionTagIdInt": 5,
-      "createTime": "2026-07-17 10:30:00",
-      "updateTime": "2026-07-17 12:00:00"
+      "productIdInt": 10,
+      "questionTagIdInt": 12,
+      "processNote": "已同步处理完毕",
+      "processUser": "客服张三",
+      "processTime": 1715080000,
+      "isTopInt": 0,
+      "satisfaction": 1,
+      "tag": { "id": 12, "name": "订单问题" },
+      "product": { "id": 10, "name": "通用版" },
+      "thirdLevelMenu": [{ "id": 45, "name": "订单同步失败" }],
+      "userInfoAssociatedDto": { "wangwang": "旺旺号123", "fhdCode": "FH123456" }
     }
   ]
 }
@@ -155,16 +179,16 @@
 
 ## curl 调用示例
 
-### 基础查询（最近7天工单，第1页，每页10条）
+### 基础查询（指定时间范围，第1页，每页20条）
 
 ```bash
 curl -s -G "https://xyymgrapi.fhd001.com/mgr/cs/workOrder/workOrderList" \
   --data-urlencode "referer=mgrapi" \
   --data-urlencode "token=$FIRE_TOKEN" \
   --data-urlencode "page=1" \
-  --data-urlencode "pageSize=10" \
-  --data-urlencode "beginTime=2026-07-10 00:00:00" \
-  --data-urlencode "endTime=2026-07-17 23:59:59"
+  --data-urlencode "pageSize=20" \
+  --data-urlencode "beginTime=<START_UNIX_SECONDS>" \
+  --data-urlencode "endTime=<END_UNIX_SECONDS>"
 ```
 
 ### 按状态筛选（待处理工单）
@@ -197,8 +221,8 @@ curl -s -G "https://xyymgrapi.fhd001.com/mgr/cs/workOrder/workOrderList" \
   --data-urlencode "token=$FIRE_TOKEN" \
   --data-urlencode "page=1" \
   --data-urlencode "pageSize=20" \
-  --data-urlencode "beginTime=2026-07-01 00:00:00" \
-  --data-urlencode "endTime=2026-07-17 23:59:59" \
+  --data-urlencode "beginTime=<START_UNIX_SECONDS>" \
+  --data-urlencode "endTime=<END_UNIX_SECONDS>" \
   --data-urlencode "processStatusInt=0" \
   --data-urlencode "typeInt=1" \
   --data-urlencode "productIdInt=1"
